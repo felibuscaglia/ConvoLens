@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import registerExport from "./commands/export";
 import registerAsk from "./commands/ask";
 import { config } from "./config/env";
+import registerActivate from "./commands/activate";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const app = new App({
 
 registerExport(app);
 registerAsk(app);
+registerActivate(app);
 
 receiver.app.listen(config.PORT, () => {
   console.log(`⚡️ ConvoLens running on port ${config.PORT}`);

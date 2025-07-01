@@ -2,10 +2,22 @@ import { App } from "@slack/bolt";
 import { fetchConversation } from "../services/conversationStore";
 import { parseExportModalValues, buildExportModal } from "../utils/exportModal";
 import { formatAsCSV, formatAsJSON } from "../utils/formatters";
+import { databaseService } from "../services/databaseService";
 
 export default function registerExport(app: App) {
-  app.command("/export", async ({ ack, body, client }) => {
+  app.command("/export", async ({ ack, body, client, respond }) => {
     await ack();
+
+    // Check if channel is synced
+    const channel = await databaseService.getChannel(body.channel_id);
+
+    if (!channel?.is_synced) {
+      return respond({
+        text: "⚠️ ConvoLens hasn't finished syncing this channel yet. Run /activate first.",
+        response_type: "ephemeral",
+      });
+    }
+
     await client.views.open({
       trigger_id: body.trigger_id,
       view: buildExportModal(),
@@ -13,6 +25,7 @@ export default function registerExport(app: App) {
   });
 
   app.view("export_submit", async ({ ack, view, body, client }) => {
+    // TODO: Validate that the channel is synced here as well
     let channel: string = "";
 
     try {

@@ -23,6 +23,7 @@
   "dependencies": {
     "@slack/bolt": "^4.4.0",
     "@slack/web-api": "^7.9.3",
+    "@supabase/supabase-js": "^2.50.2",
     "@types/json2csv": "^5.0.7",
     "dayjs": "^1.11.13",
     "dotenv": "^17.0.0",
