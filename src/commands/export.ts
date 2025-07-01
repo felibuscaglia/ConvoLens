@@ -13,13 +13,22 @@ export default function registerExport(app: App) {
   });
 
   app.view("export_submit", async ({ ack, view, body, client }) => {
+    let channel: string = "";
+
     try {
       await ack();
-      const { channel, from, to, format, includeThreads } =
-        parseExportModalValues(view);
+      const {
+        channel: _channel,
+        from,
+        to,
+        format,
+        includeThreads,
+      } = parseExportModalValues(view);
+
+      channel = _channel || "";
 
       const messages = await fetchConversation(
-        channel || "",
+        channel,
         from || "",
         to || "",
         includeThreads
@@ -28,13 +37,32 @@ export default function registerExport(app: App) {
         format === "CSV" ? formatAsCSV(messages) : formatAsJSON(messages);
 
       await client.files.uploadV2({
-        channels: body.user.id,
+        channel_id: channel,
         file: fileBuffer,
-        filename: `export-${channel}-${Date.now()}.${format?.toLowerCase()}`,
-        filetype: format?.toLowerCase(),
+        filename: `export-${channel}-${Date.now()}.${format?.toLowerCase()}`, // TODO: Change the filename, it's messy
       });
-    } catch (error) {
-      console.error("Export error:", error);
+    } catch (error: any) {
+      console.error("Export error:", error.data || error);
+
+      let errorMsg = "❌ An error occurred during export.";
+      if (error.data?.error === "not_in_channel") {
+        const result = await client.conversations.info({ channel });
+        const channelName = `#${result.channel?.name || channel}`;
+
+        errorMsg = [
+          `⚠️ I couldn't access the selected channel: \`${channelName}\`.`,
+          `This usually happens when I'm *not a member* of that channel.`,
+          `➡️ Please invite me to the channel with \`/invite @yourbot\` and try again.`,
+        ].join("\n");
+      } else if (error.data?.error) {
+        errorMsg = `❌ Slack API error: \`${error.data.error}\``;
+      }
+
+      await client.chat.postEphemeral({
+        channel,
+        user: body.user.id,
+        text: errorMsg,
+      });
     }
   });
 }

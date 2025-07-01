@@ -6,7 +6,6 @@ import {
   summarizeChunks,
 } from "../services/conversationStore";
 import openaiClient from "../services/openaiClient";
-import { parseAskCommand } from "../utils/askParser";
 
 export default function registerAsk(app: App) {
   app.command("/ask", async ({ ack, body, respond }) => {
@@ -17,11 +16,7 @@ export default function registerAsk(app: App) {
       return respond({ text: "Please enter a valid question." });
     }
 
-    const { channel, from, to, question } = await parseAskCommand(
-      text,
-      body.channel_id
-    );
-    const messages = await retrieveRelevantMessages(channel, from, to);
+    const messages = await retrieveRelevantMessages(body.channel_id,'', '');
     const summarizedContext = await summarizeChunks(messages);
 
     const prompt: ChatCompletionMessageParam[] = [

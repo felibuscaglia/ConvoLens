@@ -17,7 +17,7 @@ export async function fetchConversation(
   let cursor: string | undefined = undefined;
   let allMessages: MessageElement[] = [];
   const fromTs = dayjs(from).unix();
-  const toTs = dayjs(to).unix();
+  const toTs = dayjs(to).add(1, 'day').unix();
 
   do {
     const { messages = [], response_metadata = {} } =
@@ -25,7 +25,6 @@ export async function fetchConversation(
         channel,
         oldest: fromTs.toString(),
         latest: toTs.toString(),
-        limit: 1000, // TODO: Remove limits and allow to search entire conversations
         inclusive: true,
         cursor,
       });
