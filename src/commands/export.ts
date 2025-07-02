@@ -1,8 +1,7 @@
 import { App } from "@slack/bolt";
-import { fetchConversation } from "../services/conversationStore";
-import { parseExportModalValues, buildExportModal } from "../utils/exportModal";
-import { formatAsCSV, formatAsJSON } from "../utils/formatters";
 import { databaseService } from "../services/databaseService";
+import { buildExportModal, parseExportModalValues } from "../utils/exportModal";
+import { exportService } from "../services/exportService";
 
 export default function registerExport(app: App) {
   app.command("/export", async ({ ack, body, client, respond }) => {
@@ -13,7 +12,7 @@ export default function registerExport(app: App) {
 
     if (!channel?.is_synced) {
       return respond({
-        text: "⚠️ ConvoLens hasn't finished syncing this channel yet. Run /activate first.",
+        text: "⚠️ ConvoLens hasn't finished syncing this channel yet. Run /activate first.", // TODO: There should be two error message: one for sync not finished and one for /activate never called
         response_type: "ephemeral",
       });
     }
@@ -25,40 +24,42 @@ export default function registerExport(app: App) {
   });
 
   app.view("export_submit", async ({ ack, view, body, client }) => {
-    // TODO: Validate that the channel is synced here as well
-    let channel: string = "";
+    let channel = "";
 
     try {
       await ack();
+
       const {
         channel: _channel,
         from,
         to,
         format,
-        includeThreads,
       } = parseExportModalValues(view);
 
       channel = _channel || "";
 
-      const messages = await fetchConversation(
+      const { buffer, filename } = await exportService.exportChannelData(
         channel,
+        "general", // TODO: Change
         from || "",
         to || "",
-        includeThreads
+        format as "CSV" | "JSON"
       );
-      const fileBuffer =
-        format === "CSV" ? formatAsCSV(messages) : formatAsJSON(messages);
 
       await client.files.uploadV2({
         channel_id: channel,
-        file: fileBuffer,
-        filename: `export-${channel}-${Date.now()}.${format?.toLowerCase()}`, // TODO: Change the filename, it's messy
+        file: buffer,
+        title: `ConvoLens Export - ${filename}`,
+        initial_comment: "📊 Export completed!",
       });
     } catch (error: any) {
-      console.error("Export error:", error.data || error);
+      console.error("Export error:", error);
 
       let errorMsg = "❌ An error occurred during export.";
-      if (error.data?.error === "not_in_channel") {
+
+      if (error.message) {
+        errorMsg = `❌ ${error.message}`;
+      } else if (error.data?.error === "not_in_channel") {
         const result = await client.conversations.info({ channel });
         const channelName = `#${result.channel?.name || channel}`;
 

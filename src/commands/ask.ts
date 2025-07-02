@@ -44,6 +44,8 @@ export default function registerAsk(app: App) {
         .map((msg) => `${msg.username}: ${msg.text}`)
         .join("\n");
 
+      console.log({ relevantMessages, context });
+
       const prompt: ChatCompletionMessageParam[] = [
         {
           role: "system",

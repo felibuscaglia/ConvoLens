@@ -1,5 +1,6 @@
 import supabase from "./supabaseClient";
 import { Message, Channel } from "../types/database";
+import dayjs from "dayjs";
 
 export class DatabaseService {
   async createChannel(channelId: string, channelName: string): Promise<void> {
@@ -68,6 +69,27 @@ export class DatabaseService {
       match_count: limit,
       channel_id_filter: channelId,
     });
+
+    if (error) return [];
+
+    return data || [];
+  }
+
+  async getMessagesByDateRange(
+    channelId: string,
+    fromDate: string,
+    toDate: string
+  ): Promise<Message[]> {
+    const fromTs = dayjs(fromDate).unix().toString();
+    const toTs = dayjs(toDate).add(1, "day").unix().toString();
+
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("channel_id", channelId)
+      .gte("ts", fromTs)
+      .lt("ts", toTs)
+      .order("ts", { ascending: true });
 
     if (error) return [];
 

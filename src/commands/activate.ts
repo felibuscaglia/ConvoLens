@@ -29,9 +29,12 @@ export default function registerActivate(app: App) {
       });
 
       // TODO: Use queues/jobs
-      syncService
-        .syncChannel(channelId, channelName)
-        .catch((error) => console.error("Sync error:", error));
+      await syncService.syncChannel(channelId, channelName);
+
+      await respond({
+        text: `✅ Channel sync completed successfully! The channel \`#${channelName}\` is now ready for exports and analysis.`,
+        response_type: "ephemeral",
+      });
     } catch (error) {
       console.error("Activation error:", error);
       await respond({

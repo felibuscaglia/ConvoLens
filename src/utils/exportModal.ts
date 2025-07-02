@@ -41,27 +41,17 @@ export function buildExportModal() {
           type: "static_select" as const,
           action_id: "format_id",
           options: [
-            { text: { type: "plain_text" as const, text: "JSON" }, value: "JSON" },
-            { text: { type: "plain_text" as const, text: "CSV" }, value: "CSV" },
-          ],
-        },
-        label: { type: "plain_text" as const, text: "Format" },
-      },
-      {
-        type: "input" as const,
-        block_id: "threads",
-        element: {
-          type: "checkboxes" as const,
-          action_id: "include_threads",
-          options: [
             {
-              text: { type: "plain_text" as const, text: "Include threads" },
-              value: "yes",
+              text: { type: "plain_text" as const, text: "JSON" },
+              value: "JSON",
+            },
+            {
+              text: { type: "plain_text" as const, text: "CSV" },
+              value: "CSV",
             },
           ],
         },
-        label: { type: "plain_text" as const, text: "Options" },
-        optional: true,
+        label: { type: "plain_text" as const, text: "Format" },
       },
     ],
   };
@@ -73,7 +63,5 @@ export function parseExportModalValues(view: ViewOutput) {
     from: view.state.values.from_date.from.selected_date,
     to: view.state.values.to_date.to.selected_date,
     format: view.state.values.format.format_id.selected_option?.value,
-    includeThreads:
-      !!view.state.values.threads?.include_threads?.selected_options?.length,
   };
 }
