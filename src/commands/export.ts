@@ -49,8 +49,10 @@ export default function registerExport(app: App) {
       await client.files.uploadV2({
         channel_id: channel,
         file: buffer,
+        filename,
         title: `ConvoLens Export - ${filename}`,
         initial_comment: "📊 Export completed!",
+      
       });
     } catch (error: any) {
       console.error("Export error:", error);

@@ -65,7 +65,6 @@ export class DatabaseService {
   ): Promise<Message[]> {
     const { data, error } = await supabase.rpc("match_messages", {
       query_embedding: queryEmbedding,
-      match_threshold: 0.7,
       match_count: limit,
       channel_id_filter: channelId,
     });
@@ -79,13 +78,13 @@ export class DatabaseService {
     channelId: string,
     fromDate: string,
     toDate: string
-  ): Promise<Message[]> {
+  ): Promise<Partial<Message>[]> {
     const fromTs = dayjs(fromDate).unix().toString();
     const toTs = dayjs(toDate).add(1, "day").unix().toString();
 
     const { data, error } = await supabase
       .from("messages")
-      .select("*")
+      .select("username, text, ts")
       .eq("channel_id", channelId)
       .gte("ts", fromTs)
       .lt("ts", toTs)
